@@ -8,3 +8,7 @@ playwright/.cache/
 
 #IDE
 .idea
+
+widget-debug.png
+.idea/
+.DS_Store

@@ -1,34 +1,67 @@
+
 import { test, expect } from '@playwright/test';
-import {WidgetPage} from "./widget.page";
+import { WidgetPage } from './widget.page';
 
-test.describe('Uchi.ru widget ', () => {
-  let widgetPage: WidgetPage;
+test.describe('Uchi.ru widget', () => {
+    let widgetPage: WidgetPage;
 
-  test.beforeEach(async ({page}) => {
-    widgetPage = new WidgetPage(page);
+    test.beforeEach(async ({ page }) => {
+        widgetPage = new WidgetPage(page);
 
-    // open uchi.ru main page
-    await page.goto('/');
+        await page.goto('/', {
+            waitUntil: 'domcontentloaded'
+        });
 
-    // close cookies popup
-    await page.click('._UCHI_COOKIE__button');
-  });
+        const cookieButtons = page.locator(
+            '._UCHI_COOKIE__button'
+        );
 
-  test('opens', async ({page}) => {
-    await widgetPage.openWidget();
+        const visibleCookieButton = cookieButtons
+            .filter({ visible: true })
+            .first();
 
-    await expect(widgetPage.getWidgetBody()).toBeVisible()
-  });
+        if (await visibleCookieButton.isVisible()) {
+            await visibleCookieButton.click();
+        }
+    });
 
-  test('has correct title', async ({ page }) => {
-    await widgetPage.openWidget();
+    test('opens', async () => {
+        await widgetPage.openWidget();
 
-    const articles = await widgetPage.getPopularArticles();
+        await expect(
+            widgetPage.getWidgetBody()
+        ).toBeVisible();
+    });
 
-    await articles[0].click();
+    test('has correct title', async () => {
+        await widgetPage.openWidget();
 
-    await widgetPage.clickWriteToUs();
+        const articles = await widgetPage.getPopularArticles();
+        await articles[0].click();
 
-    expect(await widgetPage.getTitle()).toEqual('Связь с поддержкой');
-  });
+        await widgetPage.clickWriteToUs();
+
+        await expect(
+            widgetPage.getTitle()
+        ).toHaveText('Связь с поддержкой');
+    });
+
+    test('displays popular articles', async () => {
+        await widgetPage.openWidget();
+
+        const articles = await widgetPage.getPopularArticles();
+
+        expect(articles.length).toBeGreaterThan(0);
+
+        const firstArticle = articles[0];
+
+        await expect(firstArticle).toBeVisible();
+
+        const articleTitle = widgetPage.getArticleTitle(
+            firstArticle
+        );
+
+        await expect(articleTitle).toBeVisible();
+        await expect(articleTitle).not.toHaveText('');
+    });
 });
